@@ -1,0 +1,4 @@
+#papare train data
+python download_and_convert_data.py \
+--dataset_name=fishes \
+--dataset_dir=/ssd/lidenghui/jt/fishes/rotate_trainCrop/
