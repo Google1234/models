@@ -2,3 +2,18 @@
 python download_and_convert_data.py \
 --dataset_name=fishes \
 --dataset_dir=/ssd/lidenghui/jt/fishes/rotate_trainCrop/
+
+#train model
+DATASET_DIR=/ssd/lidenghui/jt/fishes/rotate_trainCrop
+TRAIN_DIR=/ssd/lidenghui/jt/fishes-models/inception_resnet_v2
+CHECKPOINT_PATH=/ssd/lidenghui/jt/checkpoints/inception_resnet_v2_2016_08_30.ckpt
+nohup python train_image_classifier.py \
+    --train_dir=${TRAIN_DIR} \
+    --dataset_dir=${DATASET_DIR} \
+    --dataset_name=fishes \
+    --dataset_split_name=train \
+    --model_name=inception_resnet_v2 \
+    --checkpoint_path=${CHECKPOINT_PATH} \
+    --checkpoint_exclude_scopes=InceptionResnetV2/Logits,InceptionResnetV2/AuxLogits \
+    --trainable_scopes=InceptionResnetV2/Logits,InceptionResnetV2/AuxLogits \
+    >/ssd/lidenghui/jt/fishes-models/remove_background/v1_basedon_inception_resnet_v2_2016_08_30.ckpt_train.txt 2<&1 &
