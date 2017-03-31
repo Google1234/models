@@ -3,6 +3,11 @@ python download_and_convert_data.py \
 --dataset_name=fishes \
 --dataset_dir=/ssd/lidenghui/jt/fishes/rotate_trainCrop/
 
+how to prepare test data:
+1.cd /ssd/lidenghui/jt/new_models/models/slim
+2.python datasets/download_and_convert_fishes_test_dataset.py --dataset_dir=/ssd/lidenghui/jt/fishes/V1/rotate_testCrop
+
+
 #train model
 DATASET_DIR=/ssd/lidenghui/jt/fishes/rotate_trainCrop
 TRAIN_DIR=/ssd/lidenghui/jt/fishes-models/inception_resnet_v2
@@ -16,4 +21,16 @@ nohup python train_image_classifier.py \
     --checkpoint_path=${CHECKPOINT_PATH} \
     --checkpoint_exclude_scopes=InceptionResnetV2/Logits,InceptionResnetV2/AuxLogits \
     --trainable_scopes=InceptionResnetV2/Logits,InceptionResnetV2/AuxLogits \
-    >/ssd/lidenghui/jt/fishes-models/remove_background/v1_basedon_inception_resnet_v2_2016_08_30.ckpt_train.txt 2<&1 &
+    >/ssd/lidenghui/jt/fishes-models/remove_background/v1_basedon_inception_resnet_v2_2016_08_30.ckpt_train_data\=V1.txt 2<&1 &
+
+# eval model 
+CHECKPOINT_FILE=/ssd/lidenghui/jt/fishes-models/remove_background/inception_resnet_v2_1/model.ckpt-35608
+DATASET_DIR=/ssd/lidenghui/jt/fishes/V1/rotate_trainCrop/
+nohup python eval_image_classifier.py \
+    --alsologtostderr \
+    --checkpoint_path=${CHECKPOINT_FILE} \
+    --dataset_dir=${DATASET_DIR} \
+    --dataset_name=fishes \
+    --dataset_split_name=validation \
+    --model_name=inception_resnet_v2 \
+    >/ssd/lidenghui/jt/fishes-models/remove_background/v1_basedon_inception_resnet_v2_2016_08_30.ckpt_eval_data\=V1.txt 2<&1 &

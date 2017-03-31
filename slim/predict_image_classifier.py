@@ -28,7 +28,7 @@ from preprocessing import preprocessing_factory
 slim = tf.contrib.slim
 
 tf.app.flags.DEFINE_integer(
-    'batch_size', 100, 'The number of samples in each batch.')
+    'batch_size', 1, 'The number of samples in each batch.')
 
 tf.app.flags.DEFINE_integer(
     'max_num_batches', None,
@@ -112,8 +112,7 @@ def main(_):
         shuffle=False,
         common_queue_capacity=2 * FLAGS.batch_size,
         common_queue_min=FLAGS.batch_size)
-    [image, label] = provider.get(['image', 'label'])
-    label -= FLAGS.labels_offset
+    [image,name] = provider.get(['image','name'])
 
     #####################################
     # Select the preprocessing function #
@@ -127,8 +126,8 @@ def main(_):
 
     image = image_preprocessing_fn(image, eval_image_size, eval_image_size)
 
-    images, labels = tf.train.batch(
-        [image, label],
+    images, names = tf.train.batch(
+        [image, name],
         batch_size=FLAGS.batch_size,
         num_threads=FLAGS.num_preprocessing_threads,
         capacity=5 * FLAGS.batch_size)
@@ -146,24 +145,8 @@ def main(_):
       variables_to_restore[tf_global_step.op.name] = tf_global_step
     else:
       variables_to_restore = slim.get_variables_to_restore()
-
+    rst=tf.nn.softmax(logits)
     predictions = tf.argmax(logits, 1)
-    labels = tf.squeeze(labels)
-
-    # Define the metrics:
-    names_to_values, names_to_updates = slim.metrics.aggregate_metric_map({
-        'Accuracy': slim.metrics.streaming_accuracy(predictions, labels),
-        'Recall_5': slim.metrics.streaming_recall_at_k(
-            logits, labels, 5),
-        'cross entroy':slim.metrics.streaming_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels,logits=logits))
-    })
-
-    # Print the summaries to screen.
-    for name, value in names_to_values.iteritems():
-      summary_name = 'eval/%s' % name
-      op = tf.summary.scalar(summary_name, value, collections=[])
-      op = tf.Print(op, [value], summary_name)
-      tf.add_to_collection(tf.GraphKeys.SUMMARIES, op)
 
     # TODO(sguada) use num_epochs=1
     if FLAGS.max_num_batches:
@@ -177,14 +160,14 @@ def main(_):
     else:
       checkpoint_path = FLAGS.checkpoint_path
 
-    tf.logging.info('Evaluating %s' % checkpoint_path)
+    tf.logging.info('predict %s' % checkpoint_path)
 
     slim.evaluation.evaluate_once(
         master=FLAGS.master,
         checkpoint_path=checkpoint_path,
         logdir=FLAGS.eval_dir,
         num_evals=num_batches,
-        eval_op=list(names_to_updates.values()),
+        eval_op=[tf.Print('',[names],summarize=FLAGS.batch_size),tf.Print('',[rst],summarize=FLAGS.batch_size*8)],
         variables_to_restore=variables_to_restore)
 
 

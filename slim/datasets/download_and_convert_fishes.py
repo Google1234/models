@@ -10,7 +10,7 @@ from datasets import dataset_utils
 import tensorflow as tf
 
 # The number of images in the validation set.
-_NUM_VALIDATION = 0
+_NUM_VALIDATION = 350
 # Seed for repeatability.
 _RANDOM_SEED = 0
 # The number of shards per dataset split.
@@ -106,7 +106,11 @@ def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir):
 
             # Read the filename:
             image_data = tf.gfile.FastGFile(filenames[i], 'r').read()
-            height, width = image_reader.read_image_dims(sess, image_data)
+            try :
+                height, width = image_reader.read_image_dims(sess, image_data)
+            except :
+                print ("Error read image:",filenames[i])
+                raise Exception
             if height>width:
               print ("Error: cropd image height > width")
               raise Exception
