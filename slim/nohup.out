@@ -1,0 +1,22 @@
+I tensorflow/stream_executor/dso_loader.cc:128] successfully opened CUDA library libcublas.so locally
+I tensorflow/stream_executor/dso_loader.cc:128] successfully opened CUDA library libcudnn.so locally
+I tensorflow/stream_executor/dso_loader.cc:128] successfully opened CUDA library libcufft.so locally
+I tensorflow/stream_executor/dso_loader.cc:128] successfully opened CUDA library libcuda.so.1 locally
+I tensorflow/stream_executor/dso_loader.cc:128] successfully opened CUDA library libcurand.so locally
+Starting TensorBoard 39 on port 6006
+(You can navigate to http://10.3.1.66:6006)
+Traceback (most recent call last):
+  File "/usr/bin/tensorboard", line 11, in <module>
+    sys.exit(main())
+  File "/usr/lib/python2.7/site-packages/tensorflow/tensorboard/tensorboard.py", line 151, in main
+    tb_server.serve_forever()
+  File "/usr/lib64/python2.7/SocketServer.py", line 236, in serve_forever
+    poll_interval)
+  File "/usr/lib64/python2.7/SocketServer.py", line 155, in _eintr_retry
+    return func(*args)
+KeyboardInterrupt
+I tensorflow/stream_executor/dso_loader.cc:128] successfully opened CUDA library libcublas.so locally
+I tensorflow/stream_executor/dso_loader.cc:128] successfully opened CUDA library libcudnn.so locally
+I tensorflow/stream_executor/dso_loader.cc:128] successfully opened CUDA library libcufft.so locally
+I tensorflow/stream_executor/dso_loader.cc:128] successfully opened CUDA library libcuda.so.1 locally
+I tensorflow/stream_executor/dso_loader.cc:128] successfully opened CUDA library libcurand.so locally
