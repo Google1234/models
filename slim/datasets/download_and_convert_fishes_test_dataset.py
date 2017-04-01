@@ -37,7 +37,7 @@ class ImageReader(object):
     assert image.shape[2] == 3
     return image
 
-def my_image_to_tfexample(image_data, image_format, height, width, filename):
+def my_image_to_tfexample(image_data, image_format,filename, height, width):
   return tf.train.Example(features=tf.train.Features(feature={
       'image/encoded': bytes_feature(image_data),
       'image/format': bytes_feature(image_format),
@@ -104,7 +104,7 @@ def _convert_dataset(split_name, filenames, dataset_dir):
               print ("Error read image:",filenames[i])
               raise Exception
             example = my_image_to_tfexample(
-                image_data, 'jpg', height, width, os.path.basename(filenames[i]))
+                image_data, 'jpg', os.path.basename(filenames[i]),height, width)
             tfrecord_writer.write(example.SerializeToString())
   sys.stdout.write('\n')
   sys.stdout.flush()
