@@ -10,7 +10,8 @@ import sys
 import tensorflow as tf
 from  datasets.dataset_utils import int64_feature
 from  datasets.dataset_utils import bytes_feature 
-
+# The number of shards per dataset split.
+_NUM_SHARDS = 2
 # Seed for repeatability.
 _RANDOM_SEED = 0
 
@@ -66,10 +67,9 @@ def _get_filenames(dataset_dir):
   #print (photo_filenames)
   return photo_filenames
 
-
-def _get_dataset_filename(dataset_dir, split_name):
-  output_filename = 'fishes_%s.tfrecord' % (
-      split_name)
+def _get_dataset_filename(dataset_dir, split_name, shard_id):
+  output_filename = 'fishes_%s_%05d-of-%05d.tfrecord' % (
+      split_name, shard_id, _NUM_SHARDS)
   return os.path.join(dataset_dir, output_filename)
 
 
@@ -84,17 +84,19 @@ def _convert_dataset(split_name, filenames, dataset_dir):
     dataset_dir: The directory where the converted datasets are stored.
   """
   assert split_name in ['test']
-
+  num_per_shard = int(math.ceil(len(filenames) / float(_NUM_SHARDS)))
   with tf.Graph().as_default():
     image_reader = ImageReader()
 
     with tf.Session('') as sess:
-        output_filename = _get_dataset_filename(
-            dataset_dir, split_name)
+      for shard_id in range(_NUM_SHARDS):
+        output_filename = _get_dataset_filename(dataset_dir, split_name, shard_id) 
         with tf.python_io.TFRecordWriter(output_filename) as tfrecord_writer:
-          for i in range(len(filenames)):
-            sys.stdout.write('\r>> Converting image %d/%d %s' % (
-                i+1, len(filenames),os.path.basename(filenames[i])))
+          start_ndx = shard_id * num_per_shard
+          end_ndx = min((shard_id+1) * num_per_shard, len(filenames))
+          for i in range(start_ndx, end_ndx):
+            sys.stdout.write('\r>> Converting image %d/%d %d' % (
+                i+1, len(filenames),shard_id))
             sys.stdout.flush()
             # Read the filename:
             image_data = tf.gfile.FastGFile(filenames[i], 'r').read()
@@ -111,9 +113,9 @@ def _convert_dataset(split_name, filenames, dataset_dir):
 
 def _dataset_exists(dataset_dir):
   for split_name in ['test']:
-    #for shard_id in range(_NUM_SHARDS):
+    for shard_id in range(_NUM_SHARDS):
       output_filename = _get_dataset_filename(
-          dataset_dir, split_name)
+          dataset_dir, split_name,shard_id)
       if not tf.gfile.Exists(output_filename):
         return False
   return True

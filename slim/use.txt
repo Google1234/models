@@ -23,7 +23,18 @@ nohup python train_image_classifier.py \
     --trainable_scopes=InceptionResnetV2/Logits,InceptionResnetV2/AuxLogits \
     >/ssd/lidenghui/jt/fishes-models/remove_background/v1_basedon_inception_resnet_v2_2016_08_30.ckpt_train_data\=V1.txt 2<&1 &
 
-# eval model 
+# eval train model
+CHECKPOINT_FILE=/ssd/lidenghui/jt/fishes-models/remove_background/inception_resnet_v2_1/model.ckpt-35608
+DATASET_DIR=/ssd/lidenghui/jt/fishes/V1/rotate_trainCrop/
+nohup python eval_image_classifier.py \
+    --alsologtostderr \
+    --checkpoint_path=${CHECKPOINT_FILE} \
+    --dataset_dir=${DATASET_DIR} \
+    --dataset_name=fishes \
+    --dataset_split_name=train \
+    --model_name=inception_resnet_v2 \
+    >/ssd/lidenghui/jt/fishes-models/remove_background/v1_basedon_inception_resnet_v2_2016_08_30.ckpt_eval_data\=V1.txt 2<&1 &
+# eval validation model 
 CHECKPOINT_FILE=/ssd/lidenghui/jt/fishes-models/remove_background/inception_resnet_v2_1/model.ckpt-35608
 DATASET_DIR=/ssd/lidenghui/jt/fishes/V1/rotate_trainCrop/
 nohup python eval_image_classifier.py \
