@@ -167,7 +167,7 @@ def main(_):
         checkpoint_path=checkpoint_path,
         logdir=FLAGS.eval_dir,
         num_evals=num_batches,
-        eval_op=[tf.Print('',[names],summarize=FLAGS.batch_size),tf.Print('',[rst],summarize=FLAGS.batch_size*8)]        
+        eval_op=[tf.Print('',[names],summarize=FLAGS.batch_size),tf.Print('',[rst],summarize=FLAGS.batch_size*8)],        
         variables_to_restore=variables_to_restore)
 
 if __name__ == '__main__':
