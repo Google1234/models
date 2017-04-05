@@ -35,14 +35,8 @@ SPLITS_TO_SIZES = {'train': 44310, 'validation': 350, 'test':1592}
 
 _NUM_CLASSES = 8
 
-_ITEMS_TO_DESCRIPTIONS = {
-    'image': 'A color image of varying size.',
-    'label': 'A single integer between 0 and 4,train or validation datasets has this attribute',
-    'name' : 'A string image name , test datasets has this attribute'
-}
 
-
-def get_split(split_name, dataset_dir, file_pattern=None, reader=None):
+def get_split(split_name, dataset_dir, read_boxes,file_pattern=None, reader=None):
   """Gets a dataset tuple with instructions for reading flowers.
 
   Args:
@@ -69,28 +63,63 @@ def get_split(split_name, dataset_dir, file_pattern=None, reader=None):
   # Allowing None in the signature so that dataset_factory can use the default.
   if reader is None:
     reader = tf.TFRecordReader
-  if split_name!="test": # train or validation datasets 
-    keys_to_features = {
-      'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
-      'image/format': tf.FixedLenFeature((), tf.string, default_value='png'),
-      'image/class/label': tf.FixedLenFeature(
-          [], tf.int64, default_value=tf.zeros([], dtype=tf.int64)),
-    }
+  if split_name!="test": # train or validation datasets
+    if read_boxes==False:
+        keys_to_features = {
+          'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
+          'image/format': tf.FixedLenFeature((), tf.string, default_value='png'),
+          'image/class/label': tf.FixedLenFeature(
+              [], tf.int64, default_value=tf.zeros([], dtype=tf.int64)),
+        }
 
-    items_to_handlers = {
-      'image': slim.tfexample_decoder.Image(),
-      'label': slim.tfexample_decoder.Tensor('image/class/label'),
-    }
+        items_to_handlers = {
+          'image': slim.tfexample_decoder.Image(),
+          'label': slim.tfexample_decoder.Tensor('image/class/label'),
+        }
+        _ITEMS_TO_DESCRIPTIONS = {
+            'image': 'A color image of varying size.',
+            'label': 'A single integer between 0 and 4,train or validation datasets has this attribute'
+        }
+    else:
+        keys_to_features = {
+            'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
+            'image/format': tf.FixedLenFeature((), tf.string, default_value='png'),
+            'image/class/label': tf.FixedLenFeature(
+                [], tf.int64, default_value=tf.zeros([], dtype=tf.int64)),
+            'image/name': tf.FixedLenFeature((), tf.string, default_value=''),
+            'image/boxes_num': tf.FixedLenFeature([], tf.int64, default_value=0),
+            'image/boxes': tf.VarLenFeature(tf.float32),
+        }
+
+        items_to_handlers = {
+            'image': slim.tfexample_decoder.Image(),
+            'label': slim.tfexample_decoder.Tensor('image/class/label'),
+            'name': slim.tfexample_decoder.Tensor('image/name'),
+            'count': slim.tfexample_decoder.Tensor('image/boxes_num'),
+            'boxes': slim.tfexample_decoder.Tensor('image/boxes'),
+        }
+        _ITEMS_TO_DESCRIPTIONS = {
+            'image': 'A color image of varying size.',
+            'label': 'A single integer between 0 and 7',
+            'name': 'the name of the image ',
+            'boxes_count': 'how many box in this image',
+            'boxes': 'the Annotated boxes of a image ',
+        }
+
   else :                # test datasets
     keys_to_features = {
       'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
       'image/format': tf.FixedLenFeature((), tf.string, default_value='jpg'),
       'image/filename': tf.FixedLenFeature((), tf.string, default_value='loss_name'),
     }
- 
+
     items_to_handlers = {
       'image': slim.tfexample_decoder.Image(),
       'name':  slim.tfexample_decoder.Tensor('image/filename'),
+    }
+    _ITEMS_TO_DESCRIPTIONS = {
+        'image': 'A color image of varying size.',
+        'name': 'the name of the image ',
     }
 
   decoder = slim.tfexample_decoder.TFExampleDecoder(

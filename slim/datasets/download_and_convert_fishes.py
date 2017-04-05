@@ -8,6 +8,7 @@ import random
 import sys
 from datasets import dataset_utils
 import tensorflow as tf
+from tools.read_bbox import read_from_xml
 
 # The number of images in the validation set.
 _NUM_VALIDATION = 350
@@ -73,7 +74,7 @@ def _dataset_exists(dataset_dir):
       if not tf.gfile.Exists(output_filename):
         return False
   return True
-def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir):
+def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir,have_boxes):
   """Converts the given filenames to a TFRecord dataset.
 
   Args:
@@ -116,14 +117,19 @@ def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir):
               raise Exception
             class_name = os.path.basename(os.path.dirname(filenames[i]))
             class_id = class_names_to_ids[class_name]
-
-            example = dataset_utils.image_to_tfexample(
-                image_data, 'jpg', height, width, class_id)
+            if have_boxes:
+              #add bbox and image name
+              boxes_num,boxes = read_from_xml(class_name, os.path.basename(filenames[i])[:-4]) #[:-4] img_0000.jpg-->img_0000
+              example = dataset_utils.image_to_tfexample_with_boxes(
+                image_data, 'jpg', class_id, height, width,os.path.basename(filenames[i]),boxes_num,boxes)
+            else:
+              example = dataset_utils.image_to_tfexample(
+                image_data, 'jpg', class_id, height, width)
             tfrecord_writer.write(example.SerializeToString())
 
   sys.stdout.write('\n')
   sys.stdout.flush()
-def run(dataset_dir):
+def run(dataset_dir,with_boxes):
   """Runs the download and conversion operation.
 
   Args:
@@ -148,9 +154,9 @@ def run(dataset_dir):
 
   # First, convert the training and validation sets.
   _convert_dataset('train', training_filenames, class_names_to_ids,
-                   dataset_dir)
+                   dataset_dir,with_boxes)
   _convert_dataset('validation', validation_filenames, class_names_to_ids,
-                   dataset_dir)
+                   dataset_dir,with_boxes)
 
   # Finally, write the labels file:
   labels_to_class_names = dict(zip(range(len(class_names)), class_names))

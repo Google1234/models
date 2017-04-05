@@ -157,14 +157,11 @@ def preprocess_for_train(image, height, width, bbox,
                          fast_mode=True,
                          scope=None):
   """Distort one image for training a network.
-
   Distorting images provides a useful technique for augmenting the data
   set during training in order to make the network invariant to aspects
   of the image that do not effect the label.
-
   Additionally it would create image_summaries to display the different
   transformations applied to the image.
-
   Args:
     image: 3-D Tensor of image. If dtype is tf.float32 then the range should be
       [0, 1], otherwise it would converted to tf.float32 assuming that the range
@@ -233,18 +230,14 @@ def preprocess_for_train(image, height, width, bbox,
     distorted_image = tf.multiply(distorted_image, 2.0)
     return distorted_image
 
-def my_preprocess_for_train(image, height, width, bbox,
-                         fast_mode=True,
-                         scope=None):
+def my_preprocess_for_train(image, height, width,fast_mode=True,scope=None,
+                            bbox_count=0, bbox=None,_k=0):
   """Distort one image for training a network.
-
   Distorting images provides a useful technique for augmenting the data
   set during training in order to make the network invariant to aspects
   of the image that do not effect the label.
-
   Additionally it would create image_summaries to display the different
   transformations applied to the image.
-
   Args:
     image: 3-D Tensor of image. If dtype is tf.float32 then the range should be
       [0, 1], otherwise it would converted to tf.float32 assuming that the range
@@ -262,32 +255,25 @@ def my_preprocess_for_train(image, height, width, bbox,
     3-D float Tensor of distorted image used for training with range [-1, 1].
   """
   with tf.name_scope(scope, 'distort_image', [image, height, width, bbox]):
-    #check image has been precessd,image height shoule== width   
-    shape=tf.shape(image)
-    if tf.equal(shape[0], shape[1], name=None)==False:           
-        print ("image height!= width,check whether image has been proprocessd")
-        raise Exception
-
-    if bbox is None:
-      bbox = tf.constant([0.0, 0.0, 1.0, 1.0],
-                         dtype=tf.float32,
-                         shape=[1, 1, 4])
+    bbox = tf.cond(tf.equal(bbox_count, tf.constant(0)),
+                     tf.constant([0.0, 0.0, 1.0, 1.0], dtype=tf.float32, shape=[1, 1, 4]),
+                     bbox)
     if image.dtype != tf.float32:
       image = tf.image.convert_image_dtype(image, dtype=tf.float32)
     # Each bounding box has shape [1, num_boxes, box coords] and
     # the coordinates are ordered [ymin, xmin, ymax, xmax].
     image_with_box = tf.image.draw_bounding_boxes(tf.expand_dims(image, 0),
                                                   bbox)
-    tf.summary.image('image_with_bounding_boxes', image_with_box)
+    tf.summary.image('image_with_bounding_boxes_'+str(_k), image_with_box)
 
-    #distorted_image, distorted_bbox = distorted_bounding_box_crop(image, bbox)
+    distorted_image, distorted_bbox = distorted_bounding_box_crop(image, bbox)
     # Restore the shape since the dynamic slice based upon the bbox_size loses
     # the third dimension.
-    #distorted_image.set_shape([None, None, 3])
-    #image_with_distorted_box = tf.image.draw_bounding_boxes(
-    #    tf.expand_dims(image, 0), distorted_bbox)
-    #tf.summary.image('images_with_distorted_bounding_box',
-    #                image_with_distorted_box)
+    distorted_image.set_shape([None, None, 3])
+    image_with_distorted_box = tf.image.draw_bounding_boxes(
+        tf.expand_dims(image, 0), distorted_bbox)
+    tf.summary.image('images_with_distorted_bounding_box',
+                     image_with_distorted_box)
 
     # This resizing operation may distort the images because the aspect
     # ratio is not respected. We select a resize method in a round robin
@@ -297,11 +283,11 @@ def my_preprocess_for_train(image, height, width, bbox,
     # We select only 1 case for fast_mode bilinear.
     num_resize_cases = 1 if fast_mode else 4
     distorted_image = apply_with_random_selector(
-        image,
+        distorted_image,
         lambda x, method: tf.image.resize_images(x, [height, width], method=method),
         num_cases=num_resize_cases)
 
-    tf.summary.image('cropped_resized_image',
+    tf.summary.image('cropped_resized_image_'+str(_k),
                      tf.expand_dims(distorted_image, 0))
 
     # Randomly flip the image horizontally.
@@ -313,7 +299,7 @@ def my_preprocess_for_train(image, height, width, bbox,
         lambda x, ordering: distort_color(x, ordering, fast_mode),
         num_cases=4)
 
-    tf.summary.image('final_distorted_image',
+    tf.summary.image('final_distorted_image_'+str(_k),
                      tf.expand_dims(distorted_image, 0))
     distorted_image = tf.subtract(distorted_image, 0.5)
     distorted_image = tf.multiply(distorted_image, 2.0)
@@ -322,13 +308,10 @@ def my_preprocess_for_train(image, height, width, bbox,
 def preprocess_for_eval(image, height, width,
                         central_fraction=0.875, scope=None):
   """Prepare one image for evaluation.
-
   If height and width are specified it would output an image with that size by
   applying resize_bilinear.
-
   If central_fraction is specified it would cropt the central fraction of the
   input image.
-
   Args:
     image: 3-D Tensor of image. If dtype is tf.float32 then the range should be
       [0, 1], otherwise it would converted to tf.float32 assuming that the range
@@ -358,6 +341,7 @@ def preprocess_for_eval(image, height, width,
     image = tf.subtract(image, 0.5)
     image = tf.multiply(image, 2.0)
     return image
+
 def my_preprocess_for_eval(image, height, width, scope=None):
   """Prepare one image for evaluation.
 
@@ -389,9 +373,9 @@ def my_preprocess_for_eval(image, height, width, scope=None):
     shape=tf.shape(image)
     if tf.equal(shape[0], shape[1], name=None)==False:
         print ("image height!= width,check whether image has been proprocessd")
-        raise Exception 
-    
-    if height and width: 
+        raise Exception
+
+    if height and width:
       # Resize the image to the specified height and width.
       image = tf.expand_dims(image, 0)
       image = tf.image.resize_bilinear(image, [height, width],
@@ -404,8 +388,7 @@ def my_preprocess_for_eval(image, height, width, scope=None):
 
 def preprocess_image(image, height, width,
                      is_training=False,
-                     bbox=None,
-                     fast_mode=True):
+                     fast_mode=True,**kwargs):
   """Pre-process one image for training or evaluation.
 
   Args:
@@ -426,6 +409,6 @@ def preprocess_image(image, height, width,
     ValueError: if user does not provide bounding box
   """
   if is_training:
-    return my_preprocess_for_train(image, height, width, bbox, fast_mode)
+    return my_preprocess_for_train(image, height, width,**kwargs )
   else:
     return my_preprocess_for_eval(image, height, width)

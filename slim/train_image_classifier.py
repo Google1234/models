@@ -34,6 +34,8 @@ tf.app.flags.DEFINE_string(
 tf.app.flags.DEFINE_string(
     'train_dir', '/tmp/tfmodel/',
     'Directory where checkpoints and event logs are written to.')
+tf.app.flags.DEFINE_boolean('read_boxes', default_value=True,
+                            docstring='read boxes from tf flies or not ')
 
 tf.app.flags.DEFINE_integer('num_clones', 1,
                             'Number of model clones to deploy.')
@@ -412,7 +414,7 @@ def main(_):
     # Select the dataset #
     ######################
     dataset = dataset_factory.get_dataset(
-        FLAGS.dataset_name, FLAGS.dataset_split_name, FLAGS.dataset_dir)
+        FLAGS.dataset_name, FLAGS.dataset_split_name, FLAGS.dataset_dir,read_boxes=FLAGS.read_boxes)
 
     ######################
     # Select the network #
@@ -440,18 +442,31 @@ def main(_):
           num_readers=FLAGS.num_readers,
           common_queue_capacity=20 * FLAGS.batch_size,
           common_queue_min=10 * FLAGS.batch_size)
-      [image, label] = provider.get(['image', 'label'])
-      label -= FLAGS.labels_offset
-
       train_image_size = FLAGS.train_image_size or network_fn.default_image_size
-
-      image = image_preprocessing_fn(image, train_image_size, train_image_size,fast_mode=False)
-
-      images, labels = tf.train.batch(
-          [image, label],
+      if FLAGS.read_boxes:
+        [image, label,image_name,boxes_count,boxes] = provider.get(['image', 'label','name','boxes_count','boxes'])
+        label -= FLAGS.labels_offset
+        shaped_boxes = tf.reshape(boxes, shape=[1, -1, 4])
+        enqueue_many = 10  # from one image get many different preprocessings images
+        images, labels = tf.train.batch(
+            [tf.pack([image_preprocessing_fn(tf.identity(image), train_image_size, train_image_size, fast_mode=False,
+                                             bbox_count=boxes_count, bbox=shaped_boxes,_k=i) for i in range(enqueue_many)],0),
+             tf.pack([label for i in range(enqueue_many)], 0)],
           batch_size=FLAGS.batch_size,
           num_threads=FLAGS.num_preprocessing_threads,
-          capacity=5 * FLAGS.batch_size)
+          capacity=5 * FLAGS.batch_size,
+          enqueue_many=True)
+      else:
+          [image, label ] = provider.get(['image', 'label'])
+          label -= FLAGS.labels_offset
+
+          image = image_preprocessing_fn(image, train_image_size, train_image_size,fast_mode=False)
+          images, labels = tf.train.batch(
+              [image, label],
+              batch_size=FLAGS.batch_size,
+              num_threads=FLAGS.num_preprocessing_threads,
+              capacity=5 * FLAGS.batch_size)
+
       labels = slim.one_hot_encoding(
           labels, dataset.num_classes - FLAGS.labels_offset)
       batch_queue = slim.prefetch_queue.prefetch_queue(

@@ -52,14 +52,51 @@ def bytes_feature(values):
   """
   return tf.train.Feature(bytes_list=tf.train.BytesList(value=[values]))
 
+def boxes_float_feature(values):
+  """Returns a TF-Feature of float32s.
+  Args:
+      values: A scalar or list of values.
+  Returns:
+  	  a TF-Feature.
+  """
+  if not isinstance(values, (tuple, list)):
+	values = [values]
+  return tf.train.Feature(float_list=tf.train.FloatList(value=values))
 
-def image_to_tfexample(image_data, image_format, height, width, class_id):
+def single_int64_feature(values):
+  """Returns a TF-Feature of int64s.
+
+  Args:
+    values: A scalar or list of values.
+
+  Returns:
+    a TF-Feature.
+  """
+  if not isinstance(values,int):
+    print ("values type is not int")
+    raise Exception
+  return tf.train.Feature(int64_list=tf.train.Int64List(value=[values]))
+
+def image_to_tfexample(image_data, image_format, class_id, height, width):
   return tf.train.Example(features=tf.train.Features(feature={
       'image/encoded': bytes_feature(image_data),
       'image/format': bytes_feature(image_format),
       'image/class/label': int64_feature(class_id),
       'image/height': int64_feature(height),
       'image/width': int64_feature(width),
+  }))
+
+def image_to_tfexample_with_boxes(image_data, image_format,class_id, height, width,name,boxes_num,boxes):
+  return tf.train.Example(features=tf.train.Features(feature={
+      'image/encoded': bytes_feature(image_data),
+      'image/format': bytes_feature(image_format),
+      'image/class/label': int64_feature(class_id),
+      'image/height': int64_feature(height),
+      'image/width': int64_feature(width),
+
+      'image/name': bytes_feature(name),
+      'image/boxes_num': single_int64_feature(boxes_num),
+      'image/boxes': boxes_float_feature(boxes),
   }))
 
 

@@ -9,14 +9,14 @@ import sys
 
 import tensorflow as tf
 from  datasets.dataset_utils import int64_feature
-from  datasets.dataset_utils import bytes_feature 
+from  datasets.dataset_utils import bytes_feature
 # The number of shards per dataset split.
 _NUM_SHARDS = 2
 # Seed for repeatability.
 _RANDOM_SEED = 0
 
 tf.app.flags.DEFINE_string(
-    'dataset_dir', '/newdisk/first/lidenghui/jt/fishes/test_stg1', 'The directory where the dataset files are stored.')
+    'dataset_dir', '', 'The directory where the dataset files are stored.')
 FLAGS = tf.app.flags.FLAGS
 
 class ImageReader(object):
@@ -59,7 +59,7 @@ def _get_filenames(dataset_dir):
   """
   fishes_root = os.path.join(dataset_dir, 'photos')
   #fishes_root=dataset_dir
-  photo_filenames = []  
+  photo_filenames = []
   for filename in os.listdir(fishes_root):
     path = os.path.join(fishes_root, filename)
     photo_filenames.append(path)
@@ -90,7 +90,7 @@ def _convert_dataset(split_name, filenames, dataset_dir):
 
     with tf.Session('') as sess:
       for shard_id in range(_NUM_SHARDS):
-        output_filename = _get_dataset_filename(dataset_dir, split_name, shard_id) 
+        output_filename = _get_dataset_filename(dataset_dir, split_name, shard_id)
         with tf.python_io.TFRecordWriter(output_filename) as tfrecord_writer:
           start_ndx = shard_id * num_per_shard
           end_ndx = min((shard_id+1) * num_per_shard, len(filenames))

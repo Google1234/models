@@ -47,6 +47,8 @@ tf.app.flags.DEFINE_string(
     'dataset_name',
     None,
     'The name of the dataset to convert, one of "cifar10", "flowers", "mnist".')
+tf.app.flags.DEFINE_boolean('with_boxes', default_value=True,
+                            docstring='write boxes to tf flies or not ')
 
 tf.app.flags.DEFINE_string(
     'dataset_dir',
@@ -67,7 +69,7 @@ def main(_):
   elif FLAGS.dataset_name == 'mnist':
     download_and_convert_mnist.run(FLAGS.dataset_dir)
   elif FLAGS.dataset_name == 'fishes':
-    download_and_convert_fishes.run(FLAGS.dataset_dir)
+    download_and_convert_fishes.run(FLAGS.dataset_dir,FLAGS.with_boxes)
   else:
     raise ValueError(
         'dataset_name [%s] was not recognized.' % FLAGS.dataset_dir)
