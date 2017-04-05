@@ -1,8 +1,8 @@
 from PIL import Image
 import os
 rotate_train=True # when rotate train image==>have dirs
-source_dir="/Users/jt/Desktop/V2/add_good/"
-dst_dir="/Users/jt/Desktop/V2/rotate/photos"
+source_dir="/ssd/lidenghui/jt/fishes/V3/combine/photos"
+dst_dir="/ssd/lidenghui/jt/fishes/V3/train/photos"
 #rotate_train=False # when rotate test image==>no dirs
 #source_dir="/ssd/lidenghui/jt/fishes/testCrop/"
 #dst_dir="/ssd/lidenghui/jt/fishes/rotate_testCrop/photos"

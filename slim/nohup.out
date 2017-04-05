@@ -15685,3 +15685,7 @@ ERROR:tensorflow:Unable to get size of /ssd/lidenghui/jt/fishes-models/inception
 WARNING:tensorflow:Found more than one graph event per run, or there was a metagraph containing a graph_def, as well as one or more graph events.  Overwriting the graph with the newest event.
 WARNING:tensorflow:Found more than one metagraph event per run. Overwriting the metagraph with the newest event.
 WARNING:tensorflow:Detected out of order event.step likely caused by a TensorFlow restart. Purging expired events from Tensorboard display between the previous step: -1 (timestamp: -1) and current step: 0 (timestamp: 1491203488.78). Removing 2296 scalars, 46200 histograms, 78540 compressed histograms, 12 images, and 0 audio.
+ERROR:tensorflow:Unable to get size of /ssd/lidenghui/jt/fishes-models/inception_resnet_v2/events.out.tfevents.1491203468.hadoop66: /ssd/lidenghui/jt/fishes-models/inception_resnet_v2/events.out.tfevents.1491203468.hadoop66
+WARNING:tensorflow:Found more than one graph event per run, or there was a metagraph containing a graph_def, as well as one or more graph events.  Overwriting the graph with the newest event.
+WARNING:tensorflow:Found more than one metagraph event per run. Overwriting the metagraph with the newest event.
+WARNING:tensorflow:Detected out of order event.step likely caused by a TensorFlow restart. Purging expired events from Tensorboard display between the previous step: -1 (timestamp: -1) and current step: 0 (timestamp: 1491324975.48). Removing 838 scalars, 28644 histograms, 28644 compressed histograms, 12 images, and 0 audio.
