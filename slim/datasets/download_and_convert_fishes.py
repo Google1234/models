@@ -8,7 +8,7 @@ import random
 import sys
 from datasets import dataset_utils
 import tensorflow as tf
-from tools.read_bbox import read_from_xml
+from tools import read_bbox 
 
 # The number of images in the validation set.
 _NUM_VALIDATION = 350
@@ -112,14 +112,14 @@ def _convert_dataset(split_name, filenames, class_names_to_ids, dataset_dir,have
             except :
                 print ("Error read image:",filenames[i])
                 raise Exception
-            if height>width:
-              print ("Error: cropd image height > width")
-              raise Exception
+            #if height>width:
+            #  print ("Error: cropd image height > width")
+            #  raise Exception
             class_name = os.path.basename(os.path.dirname(filenames[i]))
             class_id = class_names_to_ids[class_name]
             if have_boxes:
               #add bbox and image name
-              boxes_num,boxes = read_from_xml(class_name, os.path.basename(filenames[i])[:-4]) #[:-4] img_0000.jpg-->img_0000
+              boxes_num,boxes = read_bbox.read_from_xml(class_name, os.path.basename(filenames[i])[:-4]) #[:-4] img_0000.jpg-->img_0000
               example = dataset_utils.image_to_tfexample_with_boxes(
                 image_data, 'jpg', class_id, height, width,os.path.basename(filenames[i]),boxes_num,boxes)
             else:

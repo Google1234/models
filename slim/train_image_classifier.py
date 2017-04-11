@@ -63,7 +63,7 @@ tf.app.flags.DEFINE_integer(
     'The frequency with which logs are print.')
 
 tf.app.flags.DEFINE_integer(
-    'save_summaries_secs', 600,
+    'save_summaries_secs', 6000,
     'The frequency with which summaries are saved, in seconds.')
 
 tf.app.flags.DEFINE_integer(
@@ -444,23 +444,46 @@ def main(_):
           common_queue_min=10 * FLAGS.batch_size)
       train_image_size = FLAGS.train_image_size or network_fn.default_image_size
       if FLAGS.read_boxes:
-        [image, label,image_name,boxes_count,boxes] = provider.get(['image', 'label','name','boxes_count','boxes'])
+        [image, label,image_name,boxes_nums,boxes] = provider.get(['image', 'label','name','boxes_nums','boxes'])
         label -= FLAGS.labels_offset
         shaped_boxes = tf.reshape(boxes, shape=[1, -1, 4])
-        enqueue_many = 10  # from one image get many different preprocessings images
-        images, labels = tf.train.batch(
-            [tf.pack([image_preprocessing_fn(tf.identity(image), train_image_size, train_image_size, fast_mode=False,
-                                             bbox_count=boxes_count, bbox=shaped_boxes,_k=i) for i in range(enqueue_many)],0),
-             tf.pack([label for i in range(enqueue_many)], 0)],
-          batch_size=FLAGS.batch_size,
-          num_threads=FLAGS.num_preprocessing_threads,
-          capacity=5 * FLAGS.batch_size,
-          enqueue_many=True)
+        enqueue_many = 20  # for images with bbox from one image get many different preprocessings images
+        enqueue_many_small=1 #for images without bbox
+        pack_images,pack_labels=tf.cond(tf.equal(tf.constant(0,tf.int64),boxes_nums),
+                lambda:[tf.pack([image_preprocessing_fn(tf.identity(image), train_image_size, train_image_size, fast_mode=False,with_boxes=True,
+                                bbox_count=boxes_nums, bbox=shaped_boxes,_k=i) for i in range(enqueue_many_small)],0),
+                       tf.pack([label for i in range(enqueue_many_small)], 0)],
+                lambda:[tf.pack([image_preprocessing_fn(tf.identity(image), train_image_size, train_image_size, fast_mode=False,with_boxes=True,
+                                bbox_count=boxes_nums, bbox=shaped_boxes,_k=i) for i in range(enqueue_many)],0),
+                        tf.pack([label for i in range(enqueue_many)], 0)]
+                   )
+        '''
+        pack_images,pack_labels=[tf.pack([image_preprocessing_fn(tf.identity(image), train_image_size, train_image_size, fast_mode=False,with_boxes=True,
+                        bbox_count=boxes_nums, bbox=shaped_boxes,_k=i) for i in range(2)],0),
+                        tf.pack([label for i in range(2)], 0)] 
+        images,labels=tf.train.batch([pack_images,pack_labels],                                   
+                                        batch_size=FLAGS.batch_size,
+                                         num_threads=FLAGS.num_preprocessing_threads,
+                                         capacity=5 * FLAGS.batch_size,
+                                         enqueue_many=True)
+        '''
+        images, labels=tf.cond(tf.equal(tf.constant(1,tf.int64),tf.constant(0, tf.int64)),
+                lambda:tf.train.batch([image_preprocessing_fn(image, train_image_size, train_image_size,fast_mode=False,with_boxes=True,
+                                                bbox_count=boxes_nums, bbox=shaped_boxes,_k=0), label],
+                            batch_size=FLAGS.batch_size,num_threads=FLAGS.num_preprocessing_threads,capacity=5 * FLAGS.batch_size),
+                lambda:tf.train.batch([tf.pack([image_preprocessing_fn(tf.identity(image), train_image_size, train_image_size, fast_mode=False,with_boxes=True,
+                                                bbox_count=boxes_nums, bbox=shaped_boxes,_k=i) for i in range(enqueue_many)],0),
+                            tf.pack([label for i in range(enqueue_many)], 0)],
+                            batch_size=FLAGS.batch_size,
+                            num_threads=FLAGS.num_preprocessing_threads,
+                            capacity=5 * FLAGS.batch_size,
+                            enqueue_many=True))
+      '''
       else:
           [image, label ] = provider.get(['image', 'label'])
           label -= FLAGS.labels_offset
 
-          image = image_preprocessing_fn(image, train_image_size, train_image_size,fast_mode=False)
+          image = image_preprocessing_fn(image, train_image_size, train_image_size,fast_mode=False,with_boxes=False)
           images, labels = tf.train.batch(
               [image, label],
               batch_size=FLAGS.batch_size,
@@ -597,3 +620,4 @@ def main(_):
 
 if __name__ == '__main__':
   tf.app.run()
+

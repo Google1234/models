@@ -31,7 +31,7 @@ slim = tf.contrib.slim
 
 _FILE_PATTERN = 'fishes_%s_*.tfrecord'
 
-SPLITS_TO_SIZES = {'train': 44310, 'validation': 350, 'test':1592}
+SPLITS_TO_SIZES = {'train': 47347, 'validation': 350, 'test':1592}
 
 _NUM_CLASSES = 8
 
@@ -95,7 +95,7 @@ def get_split(split_name, dataset_dir, read_boxes,file_pattern=None, reader=None
             'image': slim.tfexample_decoder.Image(),
             'label': slim.tfexample_decoder.Tensor('image/class/label'),
             'name': slim.tfexample_decoder.Tensor('image/name'),
-            'count': slim.tfexample_decoder.Tensor('image/boxes_num'),
+            'boxes_nums': slim.tfexample_decoder.Tensor('image/boxes_num'),
             'boxes': slim.tfexample_decoder.Tensor('image/boxes'),
         }
         _ITEMS_TO_DESCRIPTIONS = {

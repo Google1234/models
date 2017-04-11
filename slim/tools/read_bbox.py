@@ -1,6 +1,6 @@
 import numpy
 import os
-def read_from_xml(class_name,image_name,root="/newdisk/first/lidenghui/jt/fishes/train_box"):
+def read_from_xml(class_name,image_name,root="/ssd/lidenghui/jt/fishes/train_box"):
     '''
     :param class_name:
     :param image_name:
@@ -8,6 +8,8 @@ def read_from_xml(class_name,image_name,root="/newdisk/first/lidenghui/jt/fishes
     file not exist or image do not contain specific class_name bbox ,return [0,0,1,1]
     else return ["ymin", "xmin", "ymax", "xmax"]
     '''
+    if class_name=="NoF":
+        return 1,[0,0,1,1]
     image_name+='.xml'
     file_name=os.path.join(root,class_name,image_name)
     #print ('############',file_name)
