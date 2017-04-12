@@ -24,7 +24,7 @@ import tensorflow as tf
 from datasets import dataset_factory
 from nets import nets_factory
 from preprocessing import preprocessing_factory
-
+from tools import crop
 slim = tf.contrib.slim
 
 tf.app.flags.DEFINE_integer(
@@ -94,7 +94,7 @@ def main(_):
     # Select the dataset #
     ######################
     dataset = dataset_factory.get_dataset(
-        FLAGS.dataset_name, FLAGS.dataset_split_name, FLAGS.dataset_dir)
+        FLAGS.dataset_name, FLAGS.dataset_split_name, FLAGS.dataset_dir,read_boxes=False)
 
     ####################
     # Select the model #
@@ -123,11 +123,13 @@ def main(_):
         is_training=False)
 
     eval_image_size = FLAGS.eval_image_size or network_fn.default_image_size
-
+    #crop_nums=144
+    #dataset.num_samples*=crop_nums
     image = image_preprocessing_fn(image, eval_image_size, eval_image_size)
+    #image=crop.crop_144(image,eval_image_size, eval_image_size)
 
     images, names = tf.train.batch(
-        [image, name],
+        [image,name],
         batch_size=FLAGS.batch_size,
         num_threads=FLAGS.num_preprocessing_threads,
         capacity=5 * FLAGS.batch_size)

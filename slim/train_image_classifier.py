@@ -447,7 +447,7 @@ def main(_):
         [image, label,image_name,boxes_nums,boxes] = provider.get(['image', 'label','name','boxes_nums','boxes'])
         label -= FLAGS.labels_offset
         shaped_boxes = tf.reshape(boxes, shape=[1, -1, 4])
-        enqueue_many = 20  # for images with bbox from one image get many different preprocessings images
+        enqueue_many = 10  # for images with bbox from one image get many different preprocessings images
         enqueue_many_small=1 #for images without bbox
         pack_images,pack_labels=tf.cond(tf.equal(tf.constant(0,tf.int64),boxes_nums),
                 lambda:[tf.pack([image_preprocessing_fn(tf.identity(image), train_image_size, train_image_size, fast_mode=False,with_boxes=True,
@@ -457,6 +457,8 @@ def main(_):
                                 bbox_count=boxes_nums, bbox=shaped_boxes,_k=i) for i in range(enqueue_many)],0),
                         tf.pack([label for i in range(enqueue_many)], 0)]
                    )
+        print ("################################",label)
+        tf.summary.image('final_distorted_images',pack_images,max_outputs=enqueue_many)
         '''
         pack_images,pack_labels=[tf.pack([image_preprocessing_fn(tf.identity(image), train_image_size, train_image_size, fast_mode=False,with_boxes=True,
                         bbox_count=boxes_nums, bbox=shaped_boxes,_k=i) for i in range(2)],0),
